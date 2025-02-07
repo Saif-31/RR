@@ -12,6 +12,8 @@ import os
 import logging
 from typing import Tuple, List, Optional
 import tempfile
+import matplotlib
+matplotlib.use('Agg')  # Add this line right after importing matplotlib
 
 # Configure logging
 logging.basicConfig(
@@ -173,19 +175,26 @@ def main():
                 if not results_df.empty:
                     st.success("Analysis complete! Here are the results:")
                     
-                    # Format the display of Match Score
+                    try:
+                        # Try to display with gradient
+                        st.dataframe(
+                            results_df.style
+                            .background_gradient(
+                                subset=['Match Score'],
+                                cmap='RdYlGn'
+                            )
+                            .format({'Match Score': '{:.2f}%'})
+                        )
+                    except Exception as e:
+                        logger.warning(f"Gradient display failed: {e}")
+                        # Fallback to simple display
+                        formatted_df = results_df.copy()
+                        formatted_df['Match Score'] = formatted_df['Match Score'].apply(lambda x: f"{x:.2f}%")
+                        st.dataframe(formatted_df)
+                    
+                    # Download results
                     formatted_df = results_df.copy()
                     formatted_df['Match Score'] = formatted_df['Match Score'].apply(lambda x: f"{x:.2f}%")
-                    
-                    # Display results with gradient
-                    st.dataframe(
-                        results_df.style.background_gradient(
-                            subset=['Match Score'],
-                            cmap='RdYlGn'
-                        ).format({'Match Score': '{:.2f}%'})
-                    )
-                    
-                    # Download results with formatted percentages
                     csv = formatted_df.to_csv(index=False)
                     st.download_button(
                         label="Download Results as CSV",
