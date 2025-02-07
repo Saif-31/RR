@@ -1,0 +1,9 @@
+Flask==2.1.1  
+Werkzeug==2.0.3
+# Use spacy binary instead of building from source
+spacy==3.8.4
+PyPDF2==3.0.1
+scikit-learn==1.6.1
+streamlit==1.24.0
+pandas==2.2.3
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz#egg=en_core_web_sm
