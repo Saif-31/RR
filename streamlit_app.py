@@ -49,20 +49,42 @@ def extract_text_from_pdf(pdf_file) -> Optional[str]:
         return None
 
 def extract_entities(text: str) -> Tuple[List[str], List[str]]:
-    """Extract emails and names with improved pattern matching"""
+    """
+    Extract emails and names from text using regex patterns
+    Args:
+        text (str): Input text from resume
+    Returns:
+        Tuple[List[str], List[str]]: Lists of extracted emails and names
+    """
     try:
-        emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
+        # Extract emails using more precise regular expression
+        emails = re.findall(r'\S+@\S+', text)
         
-        # More robust name extraction using spaCy
-        doc = nlp(text)
-        names = []
-        for ent in doc.ents:
-            if ent.label_ == "PERSON":
-                names.append(ent.text)
+        # Extract names using a simple pattern (assuming "First Last" format)
+        # Look for capitalized words at the start of lines or after spaces
+        names = re.findall(r'^([A-Z][a-z]+)\s+([A-Z][a-z]+)', text, re.MULTILINE)
         
-        return emails, list(set(names))  # Remove duplicates
+        # Process names into a single list of full names
+        formatted_names = []
+        if names:
+            formatted_names = [" ".join(name_tuple) for name_tuple in names]
+            
+            # Remove duplicates while preserving order
+            formatted_names = list(dict.fromkeys(formatted_names))
+            
+            # Log found names for debugging
+            logger.info(f"Found names: {formatted_names}")
+        
+        # Clean and validate emails
+        clean_emails = [
+            email.strip()
+            for email in emails
+            if '@' in email and '.' in email.split('@')[1]
+        ]
+        
+        return clean_emails, formatted_names
     except Exception as e:
-        logger.error(f"Error extracting entities: {e}")
+        logger.error(f"Error in extract_entities: {e}")
         return [], []
 
 def rank_resumes(job_description: str, resumes_data: List[Tuple]) -> pd.DataFrame:
